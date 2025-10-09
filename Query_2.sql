@@ -87,3 +87,17 @@ WHERE
     
     ORDER BY total_veriine_por_id DESC
 
+---------------------- seguro de vida duplicados en transacciones
+
+SELECT _id, roadmap, status
+FROM personas-findep.DIGITAL.me_solicitudes
+
+WHERE status = "COMPLETED"
+
+  AND UPPER(TRIM(JSON_VALUE(roadmap, '$.taskId'))) = 'VERIDIGITALIZACIONEXPEDIENTE'
+  AND UPPER(TRIM(JSON_VALUE(roadmap, '$.payload.checklist.name'))) = 'Seguro de Vida'
+  
+    AND DATE(fecha_ultima_modificacion) >= '2025-08-01'
+
+    
+
