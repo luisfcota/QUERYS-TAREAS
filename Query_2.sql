@@ -99,5 +99,53 @@ WHERE status = "COMPLETED"
   
     AND DATE(fecha_ultima_modificacion) >= '2025-08-01'
 
+GROUP BY _id, roadmap, status
+HAVING COUNT(*) > 1     
+ORDER BY _id
+---------------------- seguro de vida en transacciones      
+SELECT _id, roadmap, status
+FROM personas-findep.DIGITAL.me_solicitudes
+
+WHERE status = "COMPLETED"
+
+  AND UPPER(TRIM(JSON_VALUE(roadmap, '$.taskId'))) = 'VERIDIGITALIZACIONEXPEDIENTE'
+  AND UPPER(TRIM(JSON_VALUE(roadmap, '$.payload.checklist.name'))) = 'Seguro de Vida'
+  
+    AND DATE(fecha_ultima_modificacion) >= '2025-08-01'
+GROUP BY _id, roadmap, status
+ORDER BY _id
+---------------------- seguro de vida en transacciones
+SELECT
+    DISTINCT _id,
+    fecha_ultima_modificacion,
+    task AS resultado_task          
+FROM
+    `personas-findep.DIGITAL.me_solicitudes`,
+    UNNEST(JSON_QUERY_ARRAY(roadmap)) AS task
+WHERE
+    UPPER(TRIM(JSON_VALUE(task, '$.taskId'))) = 'VERIDIGITALIZACIONEXPEDIENTE'
+    AND UPPER(TRIM(JSON_VALUE(task, '$.payload.checklist.name'))) = 'Seguro de Vida'
+    AND DATE(fecha_ultima_modificacion) >= '2025-08-01'
+---------------------- ID CON INE NO VALIDO Y COMPROBANTE DE DOMICILIO NO VALIDO
+SELECT
+
+    DISTINCT _id,
+    fecha_ultima_modificacion,
+    task AS resultado_task
+FROM
+    `personas-findep.DIGITAL.me_solicitudes`,   
+    UNNEST(JSON_QUERY_ARRAY(roadmap)) AS task
+WHERE 
+    UPPER(TRIM(JSON_VALUE(task, '$.taskId'))) IN ('AXIINEML', 'DOMDIGITAL')
+    AND ((UPPER(TRIM(JSON_VALUE(task, '$.taskId'))) = 'AXIINEML' 
+        AND UPPER(TRIM(JSON_VALUE(task, '$.result'))) = 'REJECTED'
+        AND JSON_VALUE(task, '$.payload.mensaje') LIKE '%Error al validar INE: could not execute statement%')
+        OR
+        (UPPER(TRIM(JSON_VALUE(task, '$.taskId'))) = 'DOMDIGITAL'
+        AND UPPER(TRIM(JSON_VALUE(task, '$.result'))) = 'APPROVED'
+        AND UPPER(TRIM(JSON_VALUE(task, '$.statusDescription'))) = "VALIDACION DOM PARTICULAR DOCUMENTO NO ES VALIDO"))
+    AND DATE(fecha_ultima_modificacion) >= '2025-08-01'
+    
+
     
 
